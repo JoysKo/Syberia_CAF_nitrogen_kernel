@@ -648,6 +648,7 @@ int disable_nonboot_cpus(void)
 	 */
 	cpumask_clear(frozen_cpus);
 
+	pr_debug("Disabling non-boot CPUs ...\n");
 	for_each_online_cpu(cpu) {
 		if (cpu == first_cpu)
 			continue;
@@ -696,6 +697,8 @@ void enable_nonboot_cpus(void)
 	__cpu_hotplug_enable();
 	if (cpumask_empty(frozen_cpus))
 		goto out;
+
+	pr_debug("Enabling non-boot CPUs ...\n");
 
 	arch_enable_nonboot_cpus_begin();
 
