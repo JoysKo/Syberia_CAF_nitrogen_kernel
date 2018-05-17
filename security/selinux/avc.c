@@ -148,23 +148,22 @@ static void avc_dump_query(struct audit_buffer *ab, u32 ssid, u32 tsid, u16 tcla
 {
 	int rc;
 	char *scontext;
+	char buf[SELINUX_LABEL_LENGTH];
 	u32 scontext_len;
 
-	rc = security_sid_to_context(ssid, &scontext, &scontext_len);
+	scontext = buf;
+
+	rc = security_sid_to_context_stack(ssid, &scontext, &scontext_len);
 	if (rc)
 		audit_log_format(ab, "ssid=%d", ssid);
-	else {
+	else
 		audit_log_format(ab, "scontext=%s", scontext);
-		kfree(scontext);
-	}
 
-	rc = security_sid_to_context(tsid, &scontext, &scontext_len);
+	rc = security_sid_to_context_stack(tsid, &scontext, &scontext_len);
 	if (rc)
 		audit_log_format(ab, " tsid=%d", tsid);
-	else {
+	else
 		audit_log_format(ab, " tcontext=%s", scontext);
-		kfree(scontext);
-	}
 
 	BUG_ON(!tclass || tclass >= ARRAY_SIZE(secclass_map));
 	audit_log_format(ab, " tclass=%s", secclass_map[tclass-1].name);
@@ -351,7 +350,8 @@ static struct avc_xperms_decision_node
 	struct extended_perms_decision *xpd;
 
 	xpd_node = kmem_cache_zalloc(avc_xperms_decision_cachep,
-				     GFP_NOWAIT | __GFP_NOWARN);
+			GFP_NOWAIT | __GFP_NOWARN);
+
 	if (!xpd_node)
 		return NULL;
 
@@ -398,7 +398,9 @@ static struct avc_xperms_node *avc_xperms_alloc(void)
 {
 	struct avc_xperms_node *xp_node;
 
-	xp_node = kmem_cache_zalloc(avc_xperms_cachep, GFP_NOWAIT | __GFP_NOWARN);
+	xp_node = kmem_cache_zalloc(avc_xperms_cachep,
+			GFP_NOWAIT | __GFP_NOWARN);
+
 	if (!xp_node)
 		return xp_node;
 	INIT_LIST_HEAD(&xp_node->xpd_head);
