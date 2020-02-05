@@ -1979,9 +1979,65 @@ static ssize_t fwu_sysfs_package_id_show(struct device *dev,
 		return retval;
 	}
 
-	return snprintf(buf, PAGE_SIZE, "%d rev %d\n",
-			(package_id[1] << 8) | package_id[0],
-			(package_id[3] << 8) | package_id[2]);
+	if (get_tddi_lockdown_data(lockdown_data, lockdown_data_size) < 0) {
+		kfree(lockdown_data);
+		mutex_unlock(&fwu_sysfs_mutex);
+		return -EINVAL;
+	}
+
+	for (i = 0; i < lockdown_data_size; i++) {
+		retval += snprintf(ld_val, sizeof(ld_val), "%02x",
+				*(lockdown_data + i));
+		strlcat(buf, ld_val, lockdown_data_size);
+	}
+	*(buf + retval) = '\n';
+	kfree(lockdown_data);
+	mutex_unlock(&fwu_sysfs_mutex);
+	return retval + 1;
+}
+
+static ssize_t fwu_sysfs_write_lockdown_code_store(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t count)
+{
+	unsigned short lockdown_data_size = (count - 1) / 2;
+	unsigned char *lockdown_data;
+	unsigned char temp[2];
+	int ld_val;
+	int i = 0;
+
+	for (i = 0; i < (count - 1); i++) {
+		if (((*buf >= '0') && (*buf <= '9')) ||
+				(('a' < *buf) && (*buf > 'f')) ||
+				(('A' < *buf) && (*buf > 'F')))
+			continue;
+		else
+			return -EINVAL;
+	}
+
+	if (count % 2 != 1)
+		return -EINVAL;
+
+	lockdown_data = kzalloc(lockdown_data_size, GFP_KERNEL);
+	if (!lockdown_data)
+		return -ENOMEM;
+
+	for (i = 0; i < lockdown_data_size; i++) {
+		memcpy(temp, (buf + 2 * i), sizeof(temp));
+		if (sscanf(temp, "%02x", &ld_val) == 1)
+			*(lockdown_data + i) = ld_val & 0xff;
+	}
+
+	if (!mutex_trylock(&fwu_sysfs_mutex))
+		return -EBUSY;
+
+	if (set_tddi_lockdown_data(lockdown_data, lockdown_data_size) < 0) {
+		kfree(lockdown_data);
+		mutex_unlock(&fwu_sysfs_mutex);
+		return -EINVAL;
+	}
+	kfree(lockdown_data);
+	mutex_unlock(&fwu_sysfs_mutex);
+	return count;
 }
 #endif
 

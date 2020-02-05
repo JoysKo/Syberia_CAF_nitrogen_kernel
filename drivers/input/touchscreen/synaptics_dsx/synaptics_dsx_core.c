@@ -2601,6 +2601,37 @@ flash_prog_mode:
 	return 0;
 }
 
+static int synaptics_rmi4_gpio_setup(int gpio, bool config, int dir, int state)
+{
+	int retval = 0;
+	unsigned char buf[16];
+
+	if (config) {
+		snprintf(buf, sizeof(buf), "dsx_gpio_%u\n", gpio);
+
+		retval = gpio_request(gpio, buf);
+		if (retval) {
+			pr_err("%s: Failed to get gpio %d (code: %d)",
+					__func__, gpio, retval);
+			return retval;
+		}
+
+		if (dir == 0)
+			retval = gpio_direction_input(gpio);
+		else
+			retval = gpio_direction_output(gpio, state);
+		if (retval) {
+			pr_err("%s: Failed to set gpio %d direction",
+					__func__, gpio);
+			return retval;
+		}
+	} else {
+		gpio_free(gpio);
+	}
+
+	return retval;
+}
+
 static void synaptics_rmi4_set_params(struct synaptics_rmi4_data *rmi4_data)
 {
 	unsigned char ii;
