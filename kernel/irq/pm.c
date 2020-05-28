@@ -2,6 +2,7 @@
  * linux/kernel/irq/pm.c
  *
  * Copyright (C) 2009 Rafael J. Wysocki <rjw@sisk.pl>, Novell Inc.
+ * Copyright (C) 2020 XiaoMi, Inc.
  *
  * This file contains power management functions related to interrupts.
  */
@@ -14,6 +15,18 @@
 #include <linux/wakeup_reason.h>
 #include "internals.h"
 
+void pm_get_wakeup_interrupt(struct irq_desc *desc)
+{
+	log_suspend_abort_reason("Wakeup IRQ detected during suspend: %d %s",
+				desc->irq_data.irq,
+				desc->action && desc->action->name ?
+				desc->action->name : "");
+	pr_info("Wakeup IRQ detected during suspend: %d %s",
+				desc->irq_data.irq,
+				desc->action && desc->action->name ?
+				desc->action->name : "");
+}
+
 bool irq_pm_check_wakeup(struct irq_desc *desc)
 {
 	if (irqd_is_wakeup_armed(&desc->irq_data)) {
@@ -21,6 +34,7 @@ bool irq_pm_check_wakeup(struct irq_desc *desc)
 		desc->istate |= IRQS_SUSPENDED | IRQS_PENDING;
 		desc->depth++;
 		irq_disable(desc);
+		pm_get_wakeup_interrupt(desc);
 		pm_system_irq_wakeup(irq_desc_get_irq(desc));
 		return true;
 	}

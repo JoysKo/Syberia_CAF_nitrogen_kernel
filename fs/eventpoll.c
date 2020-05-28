@@ -1,6 +1,7 @@
 /*
  *  fs/eventpoll.c (Efficient event retrieval implementation)
  *  Copyright (C) 2001,...,2009	 Davide Libenzi
+ *  Copyright (C) 2020 XiaoMi, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -1235,7 +1236,8 @@ static int reverse_path_check(void)
 
 static int ep_create_wakeup_source(struct epitem *epi)
 {
-	const char *name;
+	char *event_name;
+	char *ws_name;
 	struct wakeup_source *ws;
 	char task_comm_buf[TASK_COMM_LEN];
 	char buf[64];
@@ -1243,19 +1245,16 @@ static int ep_create_wakeup_source(struct epitem *epi)
 	get_task_comm(task_comm_buf, current);
 
 	if (!epi->ep->ws) {
-		snprintf(buf, sizeof(buf), "epoll_%.*s_epollfd",
-			 (int)sizeof(task_comm_buf), task_comm_buf);
-		epi->ep->ws = wakeup_source_register(buf);
+		event_name = kasprintf(GFP_KERNEL, "eventpoll-%s", current->comm);
+		epi->ep->ws = wakeup_source_register(event_name);
+		kfree(event_name);
 		if (!epi->ep->ws)
 			return -ENOMEM;
 	}
 
-	take_dentry_name_snapshot(&n, epi->ffd.file->f_path.dentry);
-	snprintf(buf, sizeof(buf), "epoll_%.*s_file:%s",
-		 (int)sizeof(task_comm_buf), task_comm_buf, n.name);
-	ws = wakeup_source_register(buf);
-	release_dentry_name_snapshot(&n);
-
+	ws_name = kasprintf(GFP_KERNEL, "%s-%s", epi->ffd.file->f_path.dentry->d_name.name, current->comm);
+	ws = wakeup_source_register(ws_name);
+	kfree(ws_name);
 	if (!ws)
 		return -ENOMEM;
 	rcu_assign_pointer(epi->ws, ws);
