@@ -180,7 +180,7 @@ struct smb2 {
 	bool			bad_part;
 };
 
-static int __debug_mask = PR_MISC | PR_PARALLEL | PR_OTG;
+static int __debug_mask;
 module_param_named(
 	debug_mask, __debug_mask, int, S_IRUSR | S_IWUSR
 );
@@ -627,6 +627,9 @@ static int smb2_usb_get_prop(struct power_supply *psy,
 		break;
 	case POWER_SUPPLY_PROP_TYPE_RECHECK:
 		rc = smblib_get_prop_type_recheck(chg, val);
+		break;
+	case 143:
+		rc = -EINVAL;
 		break;
 	default:
 		pr_err("get prop %d is not supported in usb\n", psp);

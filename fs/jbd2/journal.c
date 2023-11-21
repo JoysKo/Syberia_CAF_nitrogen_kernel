@@ -69,9 +69,6 @@ EXPORT_SYMBOL(jbd2_journal_get_undo_access);
 EXPORT_SYMBOL(jbd2_journal_set_triggers);
 EXPORT_SYMBOL(jbd2_journal_dirty_metadata);
 EXPORT_SYMBOL(jbd2_journal_forget);
-#if 0
-EXPORT_SYMBOL(journal_sync_buffer);
-#endif
 EXPORT_SYMBOL(jbd2_journal_flush);
 EXPORT_SYMBOL(jbd2_journal_revoke);
 
@@ -741,24 +738,11 @@ int jbd2_transaction_need_wait(journal_t *journal, tid_t tid)
  */
 int jbd2_complete_transaction(journal_t *journal, tid_t tid)
 {
-	int	need_to_wait = 1;
-
-	read_lock(&journal->j_state_lock);
-	if (journal->j_running_transaction &&
-	    journal->j_running_transaction->t_tid == tid) {
-		if (journal->j_commit_request != tid) {
-			/* transaction not yet started, so request it */
-			read_unlock(&journal->j_state_lock);
-			jbd2_log_start_commit(journal, tid);
-			goto wait_commit;
-		}
-	} else if (!(journal->j_committing_transaction &&
-		     journal->j_committing_transaction->t_tid == tid))
-		need_to_wait = 0;
-	read_unlock(&journal->j_state_lock);
-	if (!need_to_wait)
+	if (!jbd2_transaction_need_wait(journal, tid))
 		return 0;
-wait_commit:
+	else
+		jbd2_log_start_commit(journal, tid);
+
 	return jbd2_log_wait_commit(journal, tid);
 }
 EXPORT_SYMBOL(jbd2_complete_transaction);
