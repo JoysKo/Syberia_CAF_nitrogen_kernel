@@ -1240,7 +1240,7 @@ static int ep_create_wakeup_source(struct epitem *epi)
 	char *ws_name;
 	struct wakeup_source *ws;
 	char task_comm_buf[TASK_COMM_LEN];
-	char buf[64];
+	//char buf[64];
 
 	get_task_comm(task_comm_buf, current);
 
