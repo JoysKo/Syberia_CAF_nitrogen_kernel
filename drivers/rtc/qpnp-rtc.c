@@ -694,7 +694,7 @@ fail_alarm_disable:
 extern bool alarm_fired;
 static int qpnp_rtc_resume(struct device *dev)
 {
-	struct qpnp_rtc *rtc_dd = dev_get_drvdata(dev);
+	//struct qpnp_rtc *rtc_dd = dev_get_drvdata(dev);
 
 	if (alarm_fired == true) {
 		pr_info("Alarm event generated during suspend\n");
