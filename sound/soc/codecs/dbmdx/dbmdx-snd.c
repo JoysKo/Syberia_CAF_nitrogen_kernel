@@ -129,12 +129,10 @@ static int dbmdx_snd_probe(struct platform_device *pdev)
 	}
 
 #if defined(DBMDX_DEFER_IF_SND_CARD_ID_0)
-	if (!snd_cards[0] || !snd_cards[0]->id) {
-		dev_info(&pdev->dev,
-			"%s: Defering DBMDX SND card probe, wait primary card...\n",
-			__func__);
-		return -EPROBE_DEFER;
-	}
+	dev_info(&pdev->dev,
+		"%s: Defering DBMDX SND card probe, wait primary card...\n",
+		__func__);
+	return -EPROBE_DEFER;
 #endif
 	/* Register ASoC sound Card */
 	ret = snd_soc_register_card(card);
