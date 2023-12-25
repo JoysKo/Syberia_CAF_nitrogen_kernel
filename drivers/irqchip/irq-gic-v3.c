@@ -448,7 +448,7 @@ static void gic_show_resume_irq(struct gic_chip_data *gic)
 		log_base_wakeup_reason(irq);
 		pr_warn("%s: %d triggered %s\n", __func__, irq, name);
 
-		log_wakeup_reason(irq);
+		//log_wakeup_reason(irq);
 	}
 }
 
