@@ -1666,7 +1666,7 @@ static bool can_steal_fallback(unsigned int order, int start_mt, int fallback_ty
 	 * but, below check doesn't guarantee it and that is just heuristic
 	 * so could be changed anytime.
 	 */
-	if (current_order >= pageblock_order)
+	if (order >= pageblock_order)
 		return true;
 
 	/* don't let unmovable allocations cause migrations simply because of free pages */
