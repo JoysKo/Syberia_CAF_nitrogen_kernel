@@ -91,7 +91,7 @@ static u32 latest_granting;
 
 /* Forward declaration. */
 static int context_struct_to_string(struct context *context, char **scontext,
-				    u32 *scontext_len, bool alloc);
+				    u32 *scontext_len);
 
 static void context_struct_compute_av(struct context *scontext,
 					struct context *tcontext,
@@ -1194,24 +1194,20 @@ allow:
  * to point to this string and set `*scontext_len' to
  * the length of the string.
  */
-static int context_struct_to_string(struct context *context, char **scontext, u32 *scontext_len, bool alloc)
+static int context_struct_to_string(struct context *context, char **scontext, u32 *scontext_len)
 {
 	char *scontextp;
 
-	if (alloc && scontext)
+	if (scontext)
 		*scontext = NULL;
 	*scontext_len = 0;
 
 	if (context->len) {
 		*scontext_len = context->len;
-		if (alloc) {
-			if (scontext) {
-				*scontext = kstrdup(context->str, GFP_ATOMIC);
-				if (!(*scontext))
-					return -ENOMEM;
-			}
-		} else {
-			strcpy(*scontext, context->str);
+		if (scontext) {
+			*scontext = kstrdup(context->str, GFP_ATOMIC);
+			if (!(*scontext))
+				return -ENOMEM;
 		}
 		return 0;
 	}
@@ -1225,15 +1221,11 @@ static int context_struct_to_string(struct context *context, char **scontext, u3
 	if (!scontext)
 		return 0;
 
-	if (alloc) {
-		/* Allocate space for the context; caller must free this space. */
-		scontextp = kmalloc(*scontext_len, GFP_ATOMIC);
-		if (!scontextp)
-			return -ENOMEM;
-		*scontext = scontextp;
-	} else {
-		scontextp = *scontext;
-	}
+	/* Allocate space for the context; caller must free this space. */
+	scontextp = kmalloc(*scontext_len, GFP_ATOMIC);
+	if (!scontextp)
+		return -ENOMEM;
+	*scontext = scontextp;
 
 	/*
 	 * Copy the user name, role name and type name into the context.
@@ -1306,7 +1298,7 @@ static int security_sid_to_context_core(u32 sid, char **scontext,
 		rc = -EINVAL;
 		goto out_unlock;
 	}
-	rc = context_struct_to_string(context, scontext, scontext_len, alloc);
+	rc = context_struct_to_string(context, scontext, scontext_len);
 out_unlock:
 	read_unlock(&policy_rwlock);
 out:
