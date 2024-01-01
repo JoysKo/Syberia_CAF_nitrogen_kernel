@@ -694,8 +694,6 @@ static void irq_work_routine(struct work_struct *work)
 
 			goto program;
 		} else {
-			dev_dbg(pTAS2559->dev, "IRQ status DevA: 0x%x, 0x%x\n",
-				nDevLInt1Status, nDevLInt2Status);
 			nCounter = 2;
 
 			while (nCounter > 0) {
@@ -795,8 +793,6 @@ static void irq_work_routine(struct work_struct *work)
 
 			goto program;
 		} else {
-			dev_dbg(pTAS2559->dev, "IRQ status DevB: 0x%x, 0x%x\n",
-				nDevRInt1Status, nDevRInt2Status);
 			nCounter = 2;
 
 			while (nCounter > 0) {
